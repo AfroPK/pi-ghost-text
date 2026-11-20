@@ -17,15 +17,31 @@ function createEditor(text, focused = true) {
 	return editor;
 }
 
+/**
+ * Assert `ghost` starts right after the cursor cell, allowing only the cursor
+ * cell itself (control sequences, one glyph, pi >= 1.6's APC markers) in
+ * between. The exact cell spelling differs between pi-tui versions.
+ */
+function assertGhostAtCursor(line, ghost) {
+	const marker = line.indexOf(CURSOR_MARKER);
+	assert.notEqual(marker, -1, "expected a rendered cursor marker");
+	const after = line.slice(marker + CURSOR_MARKER.length);
+	const ghostAt = after.indexOf(ghost);
+	assert.notEqual(ghostAt, -1, "expected the ghost on the cursor row");
+	const gap = after.slice(0, ghostAt);
+	assert.match(gap, /^(?:(?:\x1b_[^\x07]*\x07)|(?:\x1b\[[0-9;:]*m)| )*$/, `unexpected content before the ghost: ${JSON.stringify(gap)}`);
+	assert(after.slice(ghostAt + ghost.length).match(/^ *$/), "ghost should own the padding after it");
+}
+
 test("ghost text renders after Pi's reset cursor without treating padding as content", () => {
 	const editor = createEditor("abcd");
 	const lines = editor.render(40);
 	const original = [...lines];
-	assert(lines[1].includes(`${CURSOR_MARKER}\x1b[7m \x1b[0m`));
+	assert(lines[1].includes(CURSOR_MARKER));
 	assert.equal(visibleWidth(lines[1]), 40);
 
 	const rendered = renderGhostText(lines, 40, " prediction", true, dim);
-	assert(rendered[1].includes(`\x1b[7m \x1b[0m${dim(" prediction")}`));
+	assertGhostAtCursor(rendered[1], dim(" prediction"));
 	assert.equal(visibleWidth(rendered[1]), 40);
 	assert.equal(rendered[0], original[0]);
 	assert.equal(rendered[2], original[2]);
@@ -34,7 +50,7 @@ test("ghost text renders after Pi's reset cursor without treating padding as con
 test("ghost text also supports the inverse-video-only cursor reset", () => {
 	const lines = createEditor("abcd").render(40).map((line) => line.replaceAll("\x1b[0m", "\x1b[27m"));
 	const rendered = renderGhostText(lines, 40, " prediction", true, dim);
-	assert(rendered[1].includes(`\x1b[7m \x1b[27m${dim(" prediction")}`));
+	assertGhostAtCursor(rendered[1], dim(" prediction"));
 	assert.equal(visibleWidth(rendered[1]), 40);
 });
 
