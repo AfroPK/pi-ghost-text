@@ -1,54 +1,59 @@
-# pi-ghost-text
+<p align="center">
+  <img src=".github/assets/header.png" alt="Pi Ghost Text: inline autocomplete · pi" width="100%">
+</p>
 
-Ghost-text prompt suggestions for the [pi coding agent](https://github.com/earendil-works/pi) — like Claude Code's inline autocomplete for the prompt box.
+<p align="center">
+  <img src="https://img.shields.io/badge/%7B%20pi%20%7D-D6246E?style=for-the-badge&labelColor=0B0608" alt="{ pi }">
+  <img src="https://img.shields.io/badge/extension-0B0608?style=for-the-badge&labelColor=0B0608" alt="extension">
+  <img src="https://img.shields.io/badge/typescript-0B0608?style=for-the-badge&labelColor=0B0608" alt="typescript">
+  <img src="https://img.shields.io/badge/status-working-D6246E?style=for-the-badge&labelColor=0B0608" alt="status: working">
+</p>
 
-As you type (or after the agent finishes and the input is empty), a dimmed prediction of the likely next prompt appears after the cursor. Accept it, cycle alternatives, or keep typing.
+<p><img src=".github/assets/section-about.png" alt="01 About" width="100%"></p>
 
-## Requirements
+**`{ pi-ghost-text }`**: ghost-text prompt suggestions for the pi coding agent, like Claude Code's inline autocomplete.
 
-- **Interactive TUI mode.** Suggestions are an editor feature and only appear in the interactive terminal (`pi` with no mode flag). They do not run in `-p`/`--print`, `--mode json`, or `--mode rpc`.
-- **A model with a configured API key.** With the default `"model": "auto"`, the extension scans the available models for a fast/cheap one, in priority order: `haiku`, then `gpt-*mini`, then `flash`, then `nano`. If none match — or if an explicit `provider/model-id` isn't found — it falls back to the active session model. Set a specific model with `/suggest-model`.
+As you type, or after the agent finishes and the box is empty, a dimmed prediction of your likely next prompt appears after the cursor. Accept it, cycle alternatives, or keep typing.
 
-## Install
+> [!NOTE]
+> Interactive TUI only. Suggestions are an editor feature, so they don't run in `-p`/`--print`, `--mode json` or `--mode rpc`. The suggestion model needs a configured API key.
+
+<p><img src=".github/assets/section-features.png" alt="02 Features" width="100%"></p>
+
+| | Feature | What it does |
+|---|---|---|
+| ⌨️ | **While typing** | After ~700 ms of plain text (4+ chars), a prefix-anchored ghost appears and shrinks as you type. |
+| 🌙 | **After a turn** | When the agent settles and the box is empty, you get a next-prompt suggestion. |
+| 🔁 | **Candidates** | Set 2-3 and `Tab` cycles them instead of accepting the first. |
+| 🔒 | **Privacy first** | Sends only your typed text and the last few messages, trimmed. No transcript, tool output or file contents. |
+
+<p><img src=".github/assets/section-install.png" alt="03 Install" width="100%"></p>
+
+**Needs:** pi in interactive TUI mode · an API key for a fast model
 
 ```bash
 pi install npm:pi-ghost-text
-```
-
-Remove it:
-
-```bash
+# remove it
 pi remove npm:pi-ghost-text
 ```
 
-## Using it
+<p><img src=".github/assets/section-usage.png" alt="04 Usage" width="100%"></p>
 
 | Key | Action |
-|-----|--------|
-| `Tab` | Cycle to the next candidate; accept when it's the last (or only) one |
-| `→` (right arrow, cursor at end) | Accept the current suggestion |
-| `Esc` | Dismiss the ghost, keeping what you've typed |
-| Move the cursor away from the end | Dismiss |
-| Keep typing | Shrink the ghost while it still matches, otherwise regenerate |
+|---|---|
+| `Tab` | Cycle to the next candidate; accept when it's the last or only one |
+| `→` (cursor at end) | Accept the suggestion |
+| `Esc` | Dismiss the ghost, keep what you typed |
+| Move the cursor away | Dismiss |
+| Keep typing | Shrink while it still matches, otherwise regenerate |
 
-`Tab` only applies to the ghost when the file/command autocomplete dropdown is **not** open. Accepting inserts the suggestion into the editor for you to edit; press `Enter` to send it.
+`Tab` only applies when the file/command autocomplete dropdown is closed. Accepting puts the text in the editor so you can edit it before pressing `Enter`.
 
-When `candidates` is `1` (the default), `Tab` simply accepts. Set `candidates` to `2` or `3` to fetch alternatives and cycle them.
+Commands: `/suggest` (mode: `both`, `while-typing`, `after-turn`, `off`), `/suggest-model`, `/suggest-context`.
 
-## Commands
+<p><img src=".github/assets/section-config.png" alt="05 Config" width="100%"></p>
 
-| Command | What it does |
-|---------|--------------|
-| `/suggest` | Choose mode: `both`, `while-typing`, `after-turn`, or `off` |
-| `/suggest-model` | Pick the suggestion model (or `auto` to prefer a fast, cheap one) |
-| `/suggest-context` | Set the context window (messages × chars per message) |
-
-## Configuration
-
-Stored as JSON, resolved `defaults ← global ← project`:
-
-- global: `~/.pi/agent/prompt-suggestions.json`
-- project: `.pi/prompt-suggestions.json`
+Global `~/.pi/agent/prompt-suggestions.json`, project `.pi/prompt-suggestions.json`, resolved defaults ← global ← project.
 
 ```json
 {
@@ -63,56 +68,16 @@ Stored as JSON, resolved `defaults ← global ← project`:
 }
 ```
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `model` | `"auto"` | `"auto"` (prefer a fast, cheap model) or an explicit `provider/model-id` |
-| `mode` | `"both"` | `"both"`, `"while-typing"`, `"after-turn"`, or `"off"` |
-| `candidates` | `1` | Alternatives to fetch (1–3); `Tab` cycles them |
-| `streaming` | `true` | Stream the single suggestion token-by-token (ignored when `candidates > 1`) |
-| `contextMessages` | `8` | Recent messages included in the suggestion prompt (`0` = none) |
-| `contextChars` | `600` | Chars kept per message |
-| `maxPerTurn` | `0` | Max suggestions shown per agent turn (`0` = unlimited) |
-| `debug` | `false` | Append diagnostic lines to `~/.pi/agent/prompt-suggestions.log` |
+`model: "auto"` scans for a fast, cheap model (`haiku`, then `gpt-*mini`, then `flash`, then `nano`) and falls back to the session model. `candidates`, `streaming`, `maxPerTurn` and `debug` are JSON-only; commands always write the global scope.
 
-`mode`, `model`, `contextMessages`, and `contextChars` are settable from the commands above; `candidates`, `streaming`, `maxPerTurn`, and `debug` are JSON-only. Commands write to the **global** scope, so a project override in `.pi/prompt-suggestions.json` takes precedence over a command-set value.
+<p><img src=".github/assets/section-notes.png" alt="06 Notes" width="100%"></p>
 
-## Privacy
+- No suggestion? Check `/suggest` isn't `off`, then `/suggest-model` — an explicit model that isn't found silently falls back to the session model.
+- Set `"debug": true` to log reasons (`timeout`, `error`, `no-suggestion`) to `~/.pi/agent/prompt-suggestions.log`.
+- If streaming ghosts flake, set `"streaming": false`.
+- Tests: `npm ci --ignore-scripts && npm test` (Node 23.6+). The rendering tests use the real `Editor` from `@earendil-works/pi-tui`.
+- Inspired by [supi-prompt-suggestions](https://pi.dev/packages/@mrclrchtr/supi-prompt-suggestions?name=supi).
 
-When enabled, the suggestion model receives only:
-
-- the text you have typed so far, and
-- the last `contextMessages` user/assistant messages, each trimmed to `contextChars` characters.
-
-It is **never** sent:
-
-- the full conversation transcript,
-- tool outputs,
-- file contents,
-- project or session metadata.
-
-Suggestions are advisory and best-effort; failures are never surfaced in the UI. With `"debug": true` they are logged to `~/.pi/agent/prompt-suggestions.log` with a stable category (`timeout` / `error` / `no-suggestion`).
-
-## Troubleshooting
-
-If no suggestion appears:
-
-1. Confirm the mode is not `off` — run `/suggest`.
-2. Confirm the suggestion model has an API key configured (or, for `auto`, that one of the fast/cheap models does). `/suggest-model` shows what's available. An explicit `model` that isn't found silently falls back to the active session model, so check the spelling as `provider/model-id`.
-3. **While-typing suggestions** need ≥4 chars of plain text (not starting with `/` or `!`, not an `@file` completion in progress), a ~700ms pause, and the agent must be idle (not mid-response).
-4. **After-turn suggestions** only appear when the editor is empty right after the agent settles.
-5. If `maxPerTurn` is set, you may have hit the per-turn cap.
-6. Set `"debug": true` and check `~/.pi/agent/prompt-suggestions.log` for `[prompt-suggestions]` lines — they state the reason (`timeout`, `error`, `no-suggestion`).
-7. If the ghost flakes with streaming enabled, set `"streaming": false` to force the non-streaming path.
-
-## Development
-
-```bash
-npm ci --ignore-scripts
-npm test   # node --test (requires Node ≥ 23.6)
-```
-
-The rendering regression tests use the real `Editor` from the `@earendil-works/pi-tui` peer dependency, pinned by the committed `package-lock.json`.
-
-## Prior art
-
-Inspired by [supi-prompt-suggestions](https://pi.dev/packages/@mrclrchtr/supi-prompt-suggestions?name=supi). This adds inline while-typing autocomplete (prefix-anchored, shrink-on-type), multi-candidate cycling, streaming ghost text, scoped global/project config, and explicit modes on top of the empty-box next-prompt suggestion.
+<p align="center">
+  <img src=".github/assets/footer.png" alt="play games · make games" width="100%">
+</p>
